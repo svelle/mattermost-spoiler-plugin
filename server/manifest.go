@@ -12,9 +12,12 @@ var manifest *model.Manifest
 
 const manifestStr = `
 {
-  "id": "com.mattermost.plugin-starter-template",
-  "name": "Plugin Starter Template",
-  "description": "This plugin serves as a starting point for writing a Mattermost plugin.",
+  "id": "com.svelle.mattermost-spoiler-plugin",
+  "name": "Spoiler Plugin",
+  "description": "Allows users to post using the /spoiler command for hiding potential spoilers from other users in a channel",
+  "homepage_url": "https://github.com/svelle/mattermost-spoiler-plugin",
+  "support_url": "https://github.com/svelle/mattermost-spoiler-plugin/issues",
+  "icon_path": "assets/starter-template-icon.svg",
   "version": "0.1.0",
   "min_server_version": "5.12.0",
   "server": {
