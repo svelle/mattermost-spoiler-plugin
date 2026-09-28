@@ -1,26 +1,22 @@
-import {Store, Action} from 'redux';
-import SpoilerPost from './components/spoiler_post';
-import {GlobalState} from 'mattermost-redux/types/store';
+import manifest from 'manifest';
 
-import manifest from './manifest';
+import SpoilerPost, {SPOILER_POST_TYPE} from 'components/spoiler_post';
 
-// eslint-disable-next-line import/no-unresolved
-import {PluginRegistry} from './types/mattermost-webapp';
+import type {PluginRegistry} from 'types/mattermost-webapp';
 
 export default class Plugin {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-empty-function
-    public async initialize(registry: PluginRegistry, store: Store<GlobalState, Action<Record<string, unknown>>>) {
-        // @see https://developers.mattermost.com/extend/plugins/webapp/reference/
-        registry.registerPostTypeComponent(
-            'custom_spoiler',
-            SpoilerPost,
-        );
+    public async initialize(registry: PluginRegistry) {
+        registry.registerPostTypeComponent(SPOILER_POST_TYPE, SpoilerPost);
     }
 }
 
 declare global {
     interface Window {
-        registerPlugin(id: string, plugin: Plugin): void
+        registerPlugin(pluginId: string, plugin: Plugin): void;
+        PostUtils: {
+            formatText(text: string, options?: Record<string, unknown>): string;
+            messageHtmlToComponent(html: string, options?: Record<string, unknown>): React.ReactNode;
+        };
     }
 }
 

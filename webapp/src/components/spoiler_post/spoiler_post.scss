@@ -1,0 +1,119 @@
+.spoiler-post {
+    position: relative;
+    min-height: 40px;
+    margin: 4px 0;
+    border-radius: 8px;
+    background: rgba(var(--center-channel-color-rgb), 0.04);
+    box-shadow: inset 0 0 0 1px rgba(var(--center-channel-color-rgb), 0.08);
+
+    &__content {
+        padding: 8px 12px;
+        transition: filter 0.2s ease, opacity 0.2s ease;
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &:not(&--revealed) &__content {
+        filter: blur(8px);
+        opacity: 0.55;
+        pointer-events: none;
+        user-select: none;
+    }
+
+    &__cover {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        border-radius: inherit;
+        background: transparent;
+        color: rgba(var(--center-channel-color-rgb), 0.72);
+        cursor: pointer;
+        inset: 0;
+
+        &:hover .spoiler-post__pill {
+            color: var(--center-channel-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--button-bg);
+            outline-offset: 2px;
+        }
+    }
+
+    &__pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px 4px 8px;
+        border-radius: 999px;
+        background: var(--center-channel-bg);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+        font-size: 12px;
+        gap: 4px;
+        line-height: 16px;
+        transition: box-shadow 0.15s ease, color 0.15s ease;
+
+        .icon {
+            font-size: 16px;
+        }
+    }
+
+    &__label {
+        font-weight: 600;
+    }
+
+    &__hint {
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+
+        &::before {
+            margin-right: 4px;
+            content: '·';
+        }
+    }
+
+    &__hide {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        display: flex;
+        width: 24px;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        border-radius: 4px;
+        background: transparent;
+        color: rgba(var(--center-channel-color-rgb), 0.56);
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            background: rgba(var(--center-channel-color-rgb), 0.08);
+            color: var(--center-channel-color);
+        }
+
+        &:focus-visible {
+            opacity: 1;
+            outline: 2px solid var(--button-bg);
+        }
+    }
+
+    &--revealed:hover &__hide {
+        opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &__content,
+        &__pill,
+        &__hide {
+            transition: none;
+        }
+    }
+}
