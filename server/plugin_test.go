@@ -10,7 +10,6 @@ import (
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/mattermost/mattermost/server/public/plugin/plugintest"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,6 +28,13 @@ func TestParseSpoilerText(t *testing.T) {
 			assert.Equal(t, tc.expected, parseSpoilerText(tc.command))
 		})
 	}
+}
+
+func TestRevealMessage(t *testing.T) {
+	assert.Equal(t,
+		"**🙈 Spoiler**\n> line one\n> \n> - item\n> ```\n> code\n> ```",
+		revealMessage("line one\n\n- item\n```\ncode\n```"),
+	)
 }
 
 func TestExecuteCommand(t *testing.T) {
@@ -102,32 +108,17 @@ func TestReveal(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, w.Code)
 	})
 
-	t.Run("opens a dialog with the spoiler", func(t *testing.T) {
+	t.Run("reveals the spoiler to the user who pressed the button", func(t *testing.T) {
 		p, api := setup(t)
 		api.On("GetPost", postID).Return(spoilerPost, nil)
 		api.On("HasPermissionToChannel", userID, channelID, model.PermissionReadChannelContent).Return(true)
-		api.On("OpenInteractiveDialog", mock.MatchedBy(func(req model.OpenDialogRequest) bool {
-			return req.TriggerId == "trigger1" &&
-				req.Dialog.IntroductionText == "The butler did it" &&
-				req.URL == "/plugins/"+manifest.Id+dialogClosePath &&
-				req.IsValid() == nil
-		})).Return(nil)
 
 		w := httptest.NewRecorder()
 		p.ServeHTTP(nil, w, newRevealRequest(t, revealPath, userID, &model.PostActionIntegrationRequest{PostId: postID, TriggerId: "trigger1"}))
-		assert.Empty(t, decodeActionResponse(t, w).EphemeralText)
-	})
-
-	t.Run("falls back to an ephemeral post when the dialog fails", func(t *testing.T) {
-		p, api := setup(t)
-		api.On("GetPost", postID).Return(spoilerPost, nil)
-		api.On("HasPermissionToChannel", userID, channelID, model.PermissionReadChannelContent).Return(true)
-		api.On("OpenInteractiveDialog", mock.Anything).Return(model.NewAppError("test", "test", nil, "", http.StatusBadRequest))
-		api.On("LogWarn", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
-
-		w := httptest.NewRecorder()
-		p.ServeHTTP(nil, w, newRevealRequest(t, revealPath, userID, &model.PostActionIntegrationRequest{PostId: postID, TriggerId: "trigger1"}))
-		assert.Contains(t, decodeActionResponse(t, w).EphemeralText, "The butler did it")
+		resp := decodeActionResponse(t, w)
+		assert.Equal(t, "**🙈 Spoiler**\n> The butler did it", resp.EphemeralText)
+		assert.True(t, resp.SkipSlackParsing)
+		assert.Nil(t, resp.Update, "the shared post must not change")
 	})
 
 	t.Run("serves buttons of posts created by version 1.x", func(t *testing.T) {
