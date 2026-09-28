@@ -2,22 +2,19 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/mattermost/mattermost/server/public/model"
 )
 
 const (
-	revealPath      = "/api/v1/reveal"
-	dialogClosePath = "/api/v1/dialog/close"
+	revealPath = "/api/v1/reveal"
 
 	// legacyRevealPath is the button URL used by spoilers posted with version 1.x of the
 	// plugin. Those posts still carry it, so keep serving it.
 	legacyRevealPath = "/show"
-
-	revealDialogTitle = "🙈 Spoiler"
 )
 
 func (p *Plugin) initRouter() *mux.Router {
@@ -26,7 +23,6 @@ func (p *Plugin) initRouter() *mux.Router {
 
 	router.HandleFunc(revealPath, p.handleReveal).Methods(http.MethodPost)
 	router.HandleFunc(legacyRevealPath, p.handleReveal).Methods(http.MethodPost)
-	router.HandleFunc(dialogClosePath, p.handleDialogClose).Methods(http.MethodPost)
 
 	return router
 }
@@ -43,8 +39,7 @@ func (p *Plugin) requireUser(next http.Handler) http.Handler {
 }
 
 // handleReveal is called when someone presses the reveal button on a spoiler post. It shows
-// the hidden content only to that person: in a dialog when possible, otherwise as an
-// ephemeral post.
+// the hidden content only to that person, as an ephemeral post right below the spoiler.
 func (p *Plugin) handleReveal(w http.ResponseWriter, r *http.Request) {
 	userID := r.Header.Get("Mattermost-User-Id")
 
@@ -73,36 +68,21 @@ func (p *Plugin) handleReveal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if request.TriggerId != "" {
-		appErr = p.API.OpenInteractiveDialog(model.OpenDialogRequest{
-			TriggerId: request.TriggerId,
-			URL:       fmt.Sprintf("/plugins/%s%s", manifest.Id, dialogClosePath),
-			Dialog: model.Dialog{
-				CallbackId:       post.Id,
-				Title:            revealDialogTitle,
-				IntroductionText: text,
-				SubmitLabel:      "Done",
-			},
-		})
-		if appErr == nil {
-			p.writeActionResponse(w, &model.PostActionIntegrationResponse{})
-			return
-		}
-		p.API.LogWarn("Failed to open spoiler dialog, falling back to an ephemeral post", "post_id", post.Id, "error", appErr.Error())
-	}
-
 	p.writeActionResponse(w, &model.PostActionIntegrationResponse{
-		EphemeralText:    "**🙈 Spoiler** _(only visible to you)_\n\n" + text,
+		EphemeralText:    revealMessage(text),
 		SkipSlackParsing: true,
 	})
 }
 
-// handleDialogClose acknowledges the "Done" button of the reveal dialog.
-func (p *Plugin) handleDialogClose(w http.ResponseWriter, _ *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(&model.SubmitDialogResponse{}); err != nil {
-		p.API.LogError("Failed to write dialog response", "error", err.Error())
+// revealMessage formats the spoiler as a quote under a small heading, so it reads as part of
+// the spoiler post above it. Quoting every line keeps lists, code blocks and paragraphs
+// inside the quote.
+func revealMessage(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		lines[i] = "> " + line
 	}
+	return "**🙈 Spoiler**\n" + strings.Join(lines, "\n")
 }
 
 func (p *Plugin) writeActionResponse(w http.ResponseWriter, response *model.PostActionIntegrationResponse) {

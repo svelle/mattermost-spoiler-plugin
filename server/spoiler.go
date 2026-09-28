@@ -69,7 +69,8 @@ func (p *Plugin) executeSpoilerCommand(args *model.CommandArgs) *model.CommandRe
 }
 
 // spoilerAttachment builds the card shown on clients without the webapp plugin. Its
-// button opens the hidden content in a dialog visible only to the person who tapped it.
+// button shows the hidden content right below the post, visible only to the person who
+// tapped it.
 func spoilerAttachment() *model.MessageAttachment {
 	return &model.MessageAttachment{
 		Fallback: spoilerMessage,
