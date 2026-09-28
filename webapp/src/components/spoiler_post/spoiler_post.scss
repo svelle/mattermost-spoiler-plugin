@@ -1,13 +1,25 @@
 .spoiler-post {
+    // Shrink to the width of the text (or the reveal pill, whichever is wider) instead of
+    // filling the post. The content and the cover share one grid cell so each sizes the box.
     position: relative;
-    min-height: 40px;
+    display: inline-grid;
+    max-width: 100%;
+    min-height: 36px;
     margin: 4px 0;
+    vertical-align: top;
     border-radius: 8px;
     background: rgba(var(--center-channel-color-rgb), 0.04);
     box-shadow: inset 0 0 0 1px rgba(var(--center-channel-color-rgb), 0.08);
 
+    &__content,
+    &__cover {
+        grid-area: 1 / 1;
+    }
+
     &__content {
+        min-width: 0;
         padding: 8px 12px;
+        overflow-wrap: anywhere;
         transition: filter 0.2s ease, opacity 0.2s ease;
 
         p:last-child {
@@ -23,17 +35,15 @@
     }
 
     &__cover {
-        position: absolute;
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0;
+        padding: 6px 12px;
         border: 0;
         border-radius: inherit;
         background: transparent;
         color: rgba(var(--center-channel-color-rgb), 0.72);
         cursor: pointer;
-        inset: 0;
 
         &:hover .spoiler-post__pill {
             color: var(--center-channel-color);
@@ -55,6 +65,7 @@
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
         font-size: 12px;
         gap: 4px;
+        white-space: nowrap;
         line-height: 16px;
         transition: box-shadow 0.15s ease, color 0.15s ease;
 
@@ -103,6 +114,10 @@
             opacity: 1;
             outline: 2px solid var(--button-bg);
         }
+    }
+
+    &--revealed &__content {
+        padding-right: 36px;
     }
 
     &--revealed:hover &__hide {
